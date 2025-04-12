@@ -20,7 +20,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // API URL - adjust based on your environment
-  const API_URL = process.env.VITE_BACKEND_URL;
+  const API_URL = import.meta.env.VITE_BACKEND_URL;
 
   const fetchUserImages = async ({ name, rollNumber, level }) => {
     setLoading(true);
