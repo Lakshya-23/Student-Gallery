@@ -20,7 +20,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // API URL - adjust based on your environment
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.VITE_BACKEND_URL;
 
   const fetchUserImages = async ({ name, rollNumber, level }) => {
     setLoading(true);
