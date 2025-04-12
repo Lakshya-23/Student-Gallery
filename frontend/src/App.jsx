@@ -28,9 +28,11 @@ function App() {
       const baseUrl = API_URL.startsWith('http') 
       ? API_URL 
       : `https://${API_URL}`;
-      const response = await axios.get(`${API_URL}/api/images`, {
-        params: { rollNumber, level }
-      });
+      
+    // Use baseUrl here instead of API_URL
+    const response = await axios.get(`${baseUrl}/api/images`, {
+      params: { rollNumber, level }
+    });
 
       const data = response.data;
 
@@ -41,7 +43,7 @@ function App() {
       // Ensure URLs are full paths by prepending API_URL if they're relative paths
       const imagesWithFullUrls = data.images.map(image => ({
         ...image,
-        url: image.url.startsWith('/') ? `${API_URL}${image.url}` : image.url
+        url: image.url.startsWith('/') ? `${baseUrl}${image.url}` : image.url
       }));
 
       setUserImages(imagesWithFullUrls);
