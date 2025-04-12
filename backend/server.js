@@ -35,7 +35,9 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 app.use(express.json());
-
+app.get('/',(req,res)=>{
+  return res.send('this is home page')
+})
 // Validate input middleware
 const validateInput = (req, res, next) => {
   const { rollNumber, level } = req.query;
