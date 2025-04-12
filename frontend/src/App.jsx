@@ -25,6 +25,9 @@ function App() {
   const fetchUserImages = async ({ name, rollNumber, level }) => {
     setLoading(true);
     try {
+      const baseUrl = API_URL.startsWith('http') 
+      ? API_URL 
+      : `https://${API_URL}`;
       const response = await axios.get(`${API_URL}/api/images`, {
         params: { rollNumber, level }
       });
