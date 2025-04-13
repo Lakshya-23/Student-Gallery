@@ -112,7 +112,7 @@ function App() {
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       <div className="flex items-center gap-2">
                         <FaGraduationCap className="h-4 w-4 text-gray-500" />
-                        Level <span className="text-red-500">*</span>
+                        Level
                       </div>
                     </label>
                     <div className="relative">
