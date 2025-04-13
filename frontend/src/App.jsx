@@ -37,7 +37,8 @@ function App() {
       setSubmitted(true);
 
       if (imagesWithFullUrls.length > 0) {
-        toast.success(`Found ${imagesWithFullUrls.length} images for ${level}`);
+        if(imagesWithFullUrls.length==1) toast.success(`Found ${imagesWithFullUrls.length} image for ${level}`);
+        else toast.success(`Found ${imagesWithFullUrls.length} images for ${level}`);
       } else {
         toast.error(`No images found for ${level}`);
       }
