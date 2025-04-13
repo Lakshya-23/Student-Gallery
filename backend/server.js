@@ -22,7 +22,7 @@ app.use(helmet({
 
 // CORS setup
 app.use(cors({
-  origin: process.env.FRONTEND_URL,  // Ensure this matches your frontend URL
+  origin: process.env.FRONTEND_URL, // Your frontend URL
   methods: ['GET', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -37,31 +37,21 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Middleware for parsing JSON
 app.use(express.json());
 
-// Root endpoint
 app.get('/', (req, res) => {
   return res.send('This is the home page');
 });
 
-// Validate input middleware
+// Validate input middleware (only level is required)
 const validateInput = (req, res, next) => {
-  const { rollNumber, level } = req.query;
+  const { level } = req.query;
 
-  // Check if parameters exist
-  if (!rollNumber || !level) {
+  // Check if level exists
+  if (!level) {
     return res.status(400).json({
       success: false,
-      message: 'Roll number and level are required'
-    });
-  }
-
-  // Validate roll number (only digits, exact length)
-  if (!/^\d{10}$/.test(rollNumber)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Roll number must be exactly 10 digits'
+      message: 'Level is required'
     });
   }
 
@@ -74,11 +64,10 @@ const validateInput = (req, res, next) => {
     });
   }
 
-  // Input is valid, proceed
   next();
 };
 
-// Google Drive API Configuration
+// Google Drive API configuration
 let auth;
 if (process.env.GOOGLE_CLOUD_PRIVATE_KEY) {
   // Use environment variables if available
@@ -88,7 +77,7 @@ if (process.env.GOOGLE_CLOUD_PRIVATE_KEY) {
     scopes: ['https://www.googleapis.com/auth/drive.readonly']
   });
 } else {
-  // Fallback to credentials file if env vars not set
+  // Fallback to credentials file if environment variables are not set
   auth = new google.auth.GoogleAuth({
     keyFile: './credentials.json',
     scopes: ['https://www.googleapis.com/auth/drive.readonly'],
@@ -105,14 +94,11 @@ const sanitizeFileName = (name) => {
   return name.replace(/[^a-zA-Z0-9]/g, '');
 };
 
-// Main endpoint to fetch images (with input validation)
+// Main endpoint to fetch images based on level only
 app.get('/api/images', validateInput, async (req, res) => {
   try {
-    const { rollNumber, level } = req.query;
-
-    // Sanitize inputs
+    const { level } = req.query;
     const sanitizedLevel = sanitizeFileName(level);
-    const sanitizedRollNumber = sanitizeFileName(rollNumber);
 
     // Set a timeout to prevent long-running queries
     const timeoutPromise = new Promise((_, reject) =>
@@ -120,14 +106,11 @@ app.get('/api/images', validateInput, async (req, res) => {
     );
 
     // Get images with timeout
-    const imagesPromise = getStudentImages(sanitizedLevel, sanitizedRollNumber);
-
-    // Race between the images promise and timeout
+    const imagesPromise = getLevelImages(sanitizedLevel);
     const images = await Promise.race([imagesPromise, timeoutPromise]);
 
     return res.json({
       success: true,
-      rollNumber: sanitizedRollNumber,
       level: sanitizedLevel,
       images
     });
@@ -145,7 +128,7 @@ app.get('/api/image/:imageId', async (req, res) => {
   try {
     const imageId = req.params.imageId;
 
-    // Get the file metadata
+    // Get the file metadata for proper headers
     const fileMetadata = await drive.files.get({
       fileId: imageId,
       fields: 'mimeType,name'
@@ -177,7 +160,8 @@ app.get('/api/image/:imageId', async (req, res) => {
   }
 });
 
-async function getStudentImages(level, rollNumber) {
+// Function to fetch images from a given level folder
+async function getLevelImages(level) {
   try {
     let imagesFolderId = folderCache['Images'];
     let levelFolderId = folderCache[`Images/${level}`];
@@ -212,30 +196,17 @@ async function getStudentImages(level, rollNumber) {
       folderCache[`Images/${level}`] = levelFolderId;
     }
 
-    // Step 3: Find student's folder by roll number
-    const studentResponse = await drive.files.list({
-      q: `name='${rollNumber}' and mimeType='application/vnd.google-apps.folder' and '${levelFolderId}' in parents`,
-      fields: 'files(id, name)'
-    });
-
-    if (!studentResponse.data.files.length) {
-      return []; // No folder for this roll number
-    }
-
-    const studentFolder = studentResponse.data.files[0];
-
-    // Step 4: Get all images from the student's folder
+    // Step 3: Get all images from the level folder (images are directly inside the level folder)
     const imagesResponse = await drive.files.list({
-      q: `'${studentFolder.id}' in parents and mimeType contains 'image/'`,
+      q: `'${levelFolderId}' in parents and mimeType contains 'image/'`,
       fields: 'files(id, name, mimeType)',
       spaces: 'drive',
     });
 
-    // Limit number of images
     const MAX_IMAGES = 10000;
     const limitedFiles = imagesResponse.data.files.slice(0, MAX_IMAGES);
 
-    // Use our proxy endpoint
+    // Map files with proxy endpoint URL
     return limitedFiles.map(file => ({
       id: file.id,
       url: `/api/image/${file.id}`,
