@@ -37,7 +37,7 @@ function App() {
       setSubmitted(true);
 
       if (imagesWithFullUrls.length > 0) {
-        toast.success(`Found ${imagesWithFullUrls.length} images for Level: ${level}`);
+        toast.success(`Found ${imagesWithFullUrls.length}`);
       } else {
         toast.error(`No images found for Level: ${level}`);
       }
@@ -209,7 +209,7 @@ function App() {
                           <div>
                             <h3 className="text-sm font-medium text-yellow-800">No images found</h3>
                             <p className="mt-1 text-sm text-yellow-700">
-                              We couldn't find any images for the selected level. Please try a different one.
+                              We couldn't find any images for the selected level.
                             </p>
                           </div>
                         </div>
