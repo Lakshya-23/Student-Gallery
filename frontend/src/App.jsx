@@ -210,7 +210,7 @@ function App() {
                           <div>
                             <h3 className="text-sm font-medium text-yellow-800">No images found</h3>
                             <p className="mt-1 text-sm text-yellow-700">
-                              We couldn't find any images for the selected level.
+                            We couldn't find any images for the selected educational program.
                             </p>
                           </div>
                         </div>
