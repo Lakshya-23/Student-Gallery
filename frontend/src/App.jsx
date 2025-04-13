@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { FaUser, FaIdCard, FaGraduationCap, FaImages, FaSearch, FaArrowLeft, FaTimes } from 'react-icons/fa';
+import { FaGraduationCap, FaImages, FaSearch, FaArrowLeft, FaTimes } from 'react-icons/fa';
 import { IoMdImages } from 'react-icons/io';
 import { ImSpinner8 } from 'react-icons/im';
 import { MdOutlineWarning } from 'react-icons/md';
@@ -10,37 +10,24 @@ function App() {
   const [userImages, setUserImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [formErrors, setFormErrors] = useState({
-    name: '',
-    rollNumber: ''
-  });
-
-  // Image modal state
   const [selectedImage, setSelectedImage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // API URL - adjust based on your environment
   const API_URL = import.meta.env.VITE_BACKEND_URL;
 
-  const fetchUserImages = async ({ name, rollNumber, level }) => {
+  const fetchUserImages = async ({ level }) => {
     setLoading(true);
     try {
-      const baseUrl = API_URL.startsWith('http') 
-      ? API_URL 
-      : `https://${API_URL}`;
-      
-    // Use baseUrl here instead of API_URL
-    const response = await axios.get(`${baseUrl}/api/images`, {
-      params: { rollNumber, level }
-    });
+      const baseUrl = API_URL.startsWith('http') ? API_URL : `https://${API_URL}`;
+      const response = await axios.get(`${baseUrl}/api/images`, {
+        params: { level }
+      });
 
       const data = response.data;
-
       if (!data.success) {
         throw new Error(data.message || 'Failed to fetch images');
       }
 
-      // Ensure URLs are full paths by prepending API_URL if they're relative paths
       const imagesWithFullUrls = data.images.map(image => ({
         ...image,
         url: image.url.startsWith('/') ? `${baseUrl}${image.url}` : image.url
@@ -50,98 +37,32 @@ function App() {
       setSubmitted(true);
 
       if (imagesWithFullUrls.length > 0) {
-        toast.success(`Found ${imagesWithFullUrls.length} images for Roll No: ${rollNumber}`);
+        toast.success(`Found ${imagesWithFullUrls.length} images for Level: ${level}`);
       } else {
-        toast.error(`No images found for Roll No: ${rollNumber}`);
+        toast.error(`No images found for Level: ${level}`);
       }
     } catch (err) {
       let errorMessage = 'Something went wrong';
-
       if (err.response) {
         errorMessage = err.response.data?.message || `Error: ${err.response.status}`;
-        console.error('Error response:', err.response);
       } else if (err.request) {
         errorMessage = 'No response from server. Is the server running?';
-        console.error('Error request:', err.request);
       } else {
         errorMessage = err.message;
-        console.error('Error message:', err.message);
       }
-
       toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const validateName = (name) => {
-    if (!name || name.trim() === '') {
-      return 'Name is required';
-    }
-    return '';
-  };
-
-  const validateRollNumber = (rollNumber) => {
-    if (!rollNumber) {
-      return 'Roll Number is required';
-    }
-    if (!/^\d+$/.test(rollNumber)) {
-      return 'Roll Number must contain only digits';
-    }
-    if (rollNumber.length !== 10) {
-      return 'Roll Number must be exactly 10 digits';
-    }
-    return '';
-  };
-
-  const handleNameChange = (e) => {
-    const value = e.target.value;
-    setFormErrors(prev => ({
-      ...prev,
-      name: validateName(value)
-    }));
-  };
-
-  const handleRollNumberChange = (e) => {
-    const value = e.target.value;
-
-    // Only allow digits
-    if (value && !/^\d*$/.test(value)) {
-      e.preventDefault();
-      return;
-    }
-
-    setFormErrors(prev => ({
-      ...prev,
-      rollNumber: validateRollNumber(value)
-    }));
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const name = formData.get('name');
-    const rollNumber = formData.get('rollNumber');
     const level = formData.get('level');
-
-    const nameError = validateName(name);
-    const rollNumberError = validateRollNumber(rollNumber);
-
-    setFormErrors({
-      name: nameError,
-      rollNumber: rollNumberError
-    });
-
-    if (nameError || rollNumberError) {
-      if (nameError) toast.error(nameError);
-      if (rollNumberError) toast.error(rollNumberError);
-      return;
-    }
-
-    fetchUserImages({ name, rollNumber, level });
+    fetchUserImages({ level });
   };
 
-  // Modal functions
   const openImageModal = (image) => {
     setSelectedImage(image);
     setIsModalOpen(true);
@@ -176,73 +97,16 @@ function App() {
       </header>
 
       <main className="flex-grow flex items-start justify-center w-full">
-      <div className={`w-full ${submitted ? 'max-w-5xl' : 'max-w-xl'} mx-auto`}>
+        <div className={`w-full ${submitted ? 'max-w-5xl' : 'max-w-xl'} mx-auto`}>
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
             <div className="p-5 sm:p-8">
               <div className="flex flex-col mb-8">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Student Image Gallery</h1>
-                <p className="text-gray-500">Access your photos using your student credentials</p>
+                <p className="text-gray-500">Access your photos by selecting your academic level</p>
               </div>
 
               {!submitted ? (
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <FaUser className="h-4 w-4 text-gray-500" />
-                        Name <span className="text-red-500">*</span>
-                      </div>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="name"
-                        placeholder="Enter your full name"
-                        className={`w-full pl-10 pr-4 py-3 text-sm md:text-base border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-gray-50 ${formErrors.name ? 'border-red-500' : 'border-gray-200'
-                          }`}
-                        required
-                        onChange={handleNameChange}
-                        onBlur={handleNameChange}
-                      />
-                      <div className="absolute left-0 inset-y-0 flex items-center pl-3 pointer-events-none">
-                        <FaUser className="h-5 w-5 text-gray-400" />
-                      </div>
-                    </div>
-                    {formErrors.name && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <FaIdCard className="h-4 w-4 text-gray-500" />
-                        Roll Number <span className="text-red-500">*</span>
-                      </div>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="rollNumber"
-                        placeholder="Enter your 10-digit roll number"
-                        className={`w-full pl-10 pr-4 py-3 text-sm md:text-base border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-gray-50 ${formErrors.rollNumber ? 'border-red-500' : 'border-gray-200'
-                          }`}
-                        required
-                        maxLength={10}
-                        pattern="\d{10}"
-                        inputMode="numeric"
-                        onChange={handleRollNumberChange}
-                        onBlur={handleRollNumberChange}
-                      />
-                      <div className="absolute left-0 inset-y-0 flex items-center pl-3 pointer-events-none">
-                        <FaIdCard className="h-5 w-5 text-gray-400" />
-                      </div>
-                    </div>
-                    {formErrors.rollNumber && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.rollNumber}</p>
-                    )}
-                  </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       <div className="flex items-center gap-2">
@@ -263,11 +127,6 @@ function App() {
                       </select>
                       <div className="absolute left-0 inset-y-0 flex items-center pl-3 pointer-events-none">
                         <FaGraduationCap className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
                       </div>
                     </div>
                   </div>
@@ -314,7 +173,6 @@ function App() {
                       </div>
 
                       {userImages.length > 0 ? (
-                        // Pinterest-style masonry layout
                         <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4">
                           {userImages.map((image, index) => (
                             <div
@@ -328,9 +186,8 @@ function App() {
                                 className="w-full h-auto object-cover"
                                 loading="lazy"
                                 onError={(e) => {
-                                  console.error(`Failed to load image`);
                                   e.target.src = "https://placehold.co/400x225?text=Image+Unavailable";
-                                  e.stopPropagation(); // Prevent opening modal for failed images
+                                  e.stopPropagation();
                                 }}
                               />
                             </div>
@@ -342,7 +199,7 @@ function App() {
                           <div>
                             <h3 className="text-sm font-medium text-yellow-800">No images found</h3>
                             <p className="mt-1 text-sm text-yellow-700">
-                              We couldn't find any images associated with your student details. Please verify your information is correct.
+                              We couldn't find any images for the selected level. Please try a different one.
                             </p>
                           </div>
                         </div>
@@ -360,7 +217,6 @@ function App() {
         </div>
       </main>
 
-      {/* Image Modal - Only appears when isModalOpen is true */}
       {isModalOpen && selectedImage && (
         <div
           className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center touch-none"
@@ -368,9 +224,8 @@ function App() {
         >
           <div
             className="relative max-w-full max-h-full p-2 sm:p-4"
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the image
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               className="absolute top-3 right-3 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-colors"
               onClick={closeImageModal}
