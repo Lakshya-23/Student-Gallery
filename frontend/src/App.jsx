@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { FaGraduationCap, FaImages, FaSearch, FaArrowLeft, FaTimes } from 'react-icons/fa';
+import { FaGraduationCap, FaImages, FaSearch, FaArrowLeft, FaTimes,FaFlask } from 'react-icons/fa';
 import { IoMdImages } from 'react-icons/io';
 import { ImSpinner8 } from 'react-icons/im';
 import { MdOutlineWarning } from 'react-icons/md';
@@ -91,7 +91,7 @@ function App() {
       <header className="w-full max-w-5xl mx-auto mb-6 md:mb-10">
         <div className="flex items-center justify-center md:justify-start">
           <div className="flex items-center gap-2 bg-white py-2 px-4 rounded-full shadow-md">
-            <IoMdImages className="h-5 w-5 text-blue-600" />
+            <FaFlask className="h-5 w-5 text-blue-600" />
             <span className="font-semibold text-gray-800">Student Gallery</span>
           </div>
         </div>
